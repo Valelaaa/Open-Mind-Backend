@@ -2,7 +2,6 @@ package com.example.openmindbackend.repository.user
 
 import com.example.openmindbackend.entity.user.User
 import com.example.openmindbackend.repository.BaseRepository
-import lombok.RequiredArgsConstructor
 import org.springframework.stereotype.Repository
 
 @Repository

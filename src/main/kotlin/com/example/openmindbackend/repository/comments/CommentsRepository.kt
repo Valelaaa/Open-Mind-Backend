@@ -16,17 +16,16 @@ class CommentsRepository() : BaseRepository<Comment> {
         TODO("Not yet implemented")
     }
 
-    override fun fetchAll(): List<Comment> {
-        TODO("Not yet implemented")
-    }
+    override fun fetchAll(): List<Comment> =
+        mockCommentsRepository
+
 
     override fun updateEntity(entity: Comment) {
         mockCommentsRepository.add(entity)
     }
 
-    override fun contains(entity: Comment): Boolean {
-        return mockCommentsRepository.contains(entity)
-    }
+    override fun contains(entity: Comment): Boolean = mockCommentsRepository.contains(entity)
+
 
     fun addAll(listOfComments: MutableList<Comment>) {
         mockCommentsRepository.addAll(listOfComments)

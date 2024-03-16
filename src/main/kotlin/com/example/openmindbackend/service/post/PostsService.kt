@@ -1,8 +1,6 @@
 package com.example.openmindbackend.service.post
 
-import com.example.openmindbackend.entity.post.Post
-import com.example.openmindbackend.entity.post.PostCategories
-import com.example.openmindbackend.entity.post.PostRequestBody
+import com.example.openmindbackend.entity.post.*
 import com.example.openmindbackend.repository.comments.CommentsRepository
 import com.example.openmindbackend.repository.posts.PostsRepository
 import com.example.openmindbackend.repository.user.UserRepository
@@ -18,6 +16,8 @@ import java.util.*
 class PostsService(
     private val postsRepository: PostsRepository,
     private val userRepository: UserRepository,
+    private val commentsRepository: CommentsRepository,
+    private val mapper: PostMapper
 ) {
     init {
         addAllPosts()
@@ -87,22 +87,42 @@ class PostsService(
                     title = "Can we expedite transaction confirma-tions? Cuz yesterday I just tried some and no result...",
                     description = "description",
                     category = PostCategories.BUG,
-                    user = userRepository.fetchByNickname("johnsnow")
-
+                    user = userRepository.fetchByNickname("johnsnow"),
+                    comments = commentsRepository.fetchAll()
                 ),
                 getMockPost(),
             )
         )
     }
 
-    fun getAllPosts(category: PostCategories?): List<Post> {
-        if (category == null)
-            return postsRepository.fetchAll()
-        return postsRepository.fetchPosts(category)
+    fun getAllPosts(category: String?, sortType: String, sortOrder: String): List<Post> {
+        var posts = if (category == null) {
+            postsRepository.fetchAll()
+        } else {
+            val postCategory: PostCategories? = try {
+                PostCategories.valueOf(category.uppercase())
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+            postsRepository.fetchPosts(postCategory)
+        }
+
+        posts = when (sortType) {
+            "hot" -> if (sortOrder == "asc") posts.sortedBy { it.rating.currentRating } else posts.sortedByDescending { it.rating.currentRating }
+            "fresh" -> if (sortOrder == "asc") posts.sortedBy { it.createdDate } else posts.sortedByDescending { it.createdDate }
+            "old" -> if (sortOrder == "desc") posts.sortedBy { it.createdDate } else posts.sortedByDescending { it.createdDate }
+            "title" -> if (sortOrder == "asc") posts.sortedBy { it.title } else posts.sortedByDescending { it.title }
+            else -> {posts}
+        }
+
+        return posts
     }
 
-    fun getPostById(id: String): Post {
-        TODO("Return post by id")
+    fun getPostById(id: String): ResponseEntity<PostDto> {
+        val post = postsRepository.fetchAll().firstOrNull { it.postId == id }
+        val isPostNotNull = (post != null)
+        return ResponseEntity.status(if (isPostNotNull) HttpStatus.OK else HttpStatus.NOT_FOUND)
+            .body(mapper.postToDto(if (isPostNotNull) post!! else Post()))
     }
 
     fun createOrUpdateService(@RequestBody postRequest: PostRequestBody): ResponseEntity<Void> {

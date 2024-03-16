@@ -21,6 +21,7 @@ class PostsRepository(
     }
 
     fun fetchPosts(category: PostCategories?): List<Post> {
+        if (category == null) {return emptyList()}
         return mockRepository.filter { it.category == category }
     }
 

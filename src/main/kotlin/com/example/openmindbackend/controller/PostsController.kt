@@ -17,25 +17,31 @@ class PostsController(
     private val mapper: PostMapper
 ) {
     @GetMapping
-    fun getPosts(@RequestParam(name = "category", required = false) category: String?): Page<PostDto> {
-        val postCategory: PostCategories? = try {
-            PostCategories.valueOf(category.orEmpty().uppercase())
-        } catch (e: IllegalArgumentException) {
-            null
-        }
+    fun getPosts(
+        @RequestParam(name = "category", required = false) category: String?,
+        @RequestParam(name = "pageNumber", required = false, defaultValue = "0") pageNumber: Int,
+        @RequestParam(name ="pageSize", required = false, defaultValue = "100") pageSize:Int,
+        @RequestParam(name = "sortType", required = false, defaultValue = "fresh") sortType:String,
+        @RequestParam(name = "sortOrder", required = false, defaultValue = "asc") sortOrder:String,
+    ): Page<PostDto> {
 
-        val postList = postsService.getAllPosts(postCategory).map(mapper::postToDto)
-        return PageImpl(postList, PageRequest.of(0, 2), postList.size.toLong())
+        val postList = postsService.getAllPosts(category, sortType, sortOrder).map(mapper::postToDto)
+        return PageImpl(postList, PageRequest.of(pageNumber, pageSize), postList.size.toLong())
     }
 
     @GetMapping("/post/{postId}")
-    fun getPostById(@PathVariable("postId") id: String): Post {
+    fun getPostById(@PathVariable("postId") id: String): ResponseEntity<PostDto> {
         return postsService.getPostById(id)
     }
 
     @PostMapping
     fun createOrUpdatePost(@RequestBody postRequest: PostRequestBody): ResponseEntity<Void> {
         return postsService.createOrUpdateService(postRequest)
+    }
+
+    @PatchMapping("/{postId}")
+    fun updatePost(@PathVariable("postId") id: String, @RequestBody postRequest: PostRequestBody) {
+
     }
 
 }
